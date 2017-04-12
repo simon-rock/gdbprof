@@ -58,7 +58,7 @@ The default PERIOD is 0.5 seconds.
     def invoke(self, argument, from_tty):
         self.dont_repeat()
 
-        period = 0.5
+        period = 0.1
 
         args = gdb.string_to_argv(argument)
 
@@ -74,26 +74,41 @@ The default PERIOD is 0.5 seconds.
             sleep(period)
             os.kill(gdb.selected_inferior().pid, signal.SIGINT)
 
-        call_chain_frequencies = defaultdict(int)
+        call_chain_frequencies = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
         sleeps = 0
 
-        try:
-            while True:
-                gdb.events.cont.connect(breaking_continue_handler)
-                gdb.execute("continue", to_string=True)
-                gdb.events.cont.disconnect(breaking_continue_handler)
+        for i in xrange(0,5000):
+          gdb.events.cont.connect(breaking_continue_handler)
+          gdb.execute("continue", to_string=True)
+          gdb.events.cont.disconnect(breaking_continue_handler)
 
-                call_chain_frequencies[get_call_chain()] += 1
-                sleeps += 1
-                gdb.write(".")
-                gdb.flush(gdb.STDOUT)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            gdb.events.cont.disconnect(breaking_continue_handler)
-            print("\nProfiling complete with %d samples." % sleeps)
-            for call_chain, frequency in sorted(call_chain_frequencies.iteritems(), key=lambda x: x[1], reverse=True):
-                print("%d\t%s" % (frequency, '->'.join(str(i) for i in call_chain)))
+          for inf in gdb.inferiors():
+            inum = inf.num
+            for th in inf.threads():
+              thn = th.num
+              th.switch()
+              call_chain_frequencies[inum][thn][get_call_chain()] += 1
+
+          sleeps += 1
+          gdb.write(".")
+          gdb.flush(gdb.STDOUT)
+
+        print("\nProfiling complete with %d samples." % sleeps)
+        for inum, i_chain_frequencies in sorted(call_chain_frequencies.iteritems()):
+            print ""
+            print "INFERIOR NUM: %s" % inum
+            print ""
+            for thn, t_chain_frequencies in sorted (i_chain_frequencies.iteritems()):
+                print ""
+                print "THREAD NUM: %s" % thn
+                print ""
+
+                for call_chain, frequency in sorted(t_chain_frequencies.iteritems(), key=lambda x: x[1], reverse=True):
+                    print("%d\t%s" % (frequency, '->'.join(str(i) for i in call_chain)))
+
+#        for call_chain, frequency in sorted(call_chain_frequencies.iteritems(), key=lambda x: x[1], reverse=True):
+#            print("%d\t%s" % (frequency, '->'.join(str(i) for i in call_chain)))
+
 
         pid = gdb.selected_inferior().pid
         os.kill(pid, signal.SIGSTOP)  # Make sure the process does nothing until
