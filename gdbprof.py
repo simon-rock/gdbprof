@@ -93,6 +93,11 @@ class Function:
                new_prefix += '| '
 
             print "%s%s%0.2f%% %s" % (prefix, "+ ", value, name)
+
+            # Don't descend for very small values
+            if value < 0.1:
+                continue;
+
             self.get_func(name).print_percent(prefix + new_prefix, total)
             i += 1
 
@@ -151,7 +156,8 @@ The default PERIOD is 0.5 seconds.
         top = Function("Top", 2)
         sleeps = 0
 
-        for i in xrange(0,100):
+        threads = {}
+        for i in xrange(0,2000):
           gdb.events.cont.connect(breaking_continue_handler)
           gdb.execute("continue", to_string=True)
           gdb.events.cont.disconnect(breaking_continue_handler)
@@ -165,14 +171,23 @@ The default PERIOD is 0.5 seconds.
               frame = gdb.newest_frame()
               while (frame.older() != None):
                 frame = frame.older()
-              top.inverse_add_frame(frame);
+#              top.inverse_add_frame(frame);
 #              top.add_frame(gdb.newest_frame())
+              if thn not in threads:
+                threads[thn] = Function(str(thn), 2)
+              threads[thn].inverse_add_frame(frame)
+
           sleeps += 1
           gdb.write(".")
           gdb.flush(gdb.STDOUT)
 
         print "";
-        top.print_percent("", top.get_samples())
+        for thn, function in sorted(threads.iteritems()):
+          print ""
+          print "Thread: %s" % thn
+          print ""
+          function.print_percent("", function.get_samples())
+#        top.print_percent("", top.get_samples())
 
 #        print("\nProfiling complete with %d samples." % sleeps)
 #        for inum, i_chain_frequencies in sorted(call_chain_frequencies.iteritems()):
