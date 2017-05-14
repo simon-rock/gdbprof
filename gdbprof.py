@@ -126,7 +126,7 @@ class ProfileBeginCommand(gdb.Command):
     """Profile an application against wall clock time.
 profile begin [PERIOD]
 PERIOD is the sampling interval in seconds.
-The default PERIOD is 0.5 seconds.
+The default PERIOD is 0.1 seconds.
     """
 
     def __init__(self):
