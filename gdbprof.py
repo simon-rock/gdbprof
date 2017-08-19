@@ -129,9 +129,10 @@ PERIOD is the sampling interval in seconds.
 The default PERIOD is 0.1 seconds.
     """
 
-    def __init__(self):
+    def __init__(self, how_long = 200):
         super(ProfileBeginCommand, self).__init__("profile begin",
                                                   gdb.COMMAND_RUNNING)
+        self.how_long=how_long
 
     def invoke(self, argument, from_tty):
         self.dont_repeat()
@@ -157,7 +158,7 @@ The default PERIOD is 0.1 seconds.
         sleeps = 0
 
         threads = {}
-        for i in xrange(0,2000):
+        for i in xrange(0,self.how_long):
           gdb.events.cont.connect(breaking_continue_handler)
           gdb.execute("continue", to_string=True)
           gdb.events.cont.disconnect(breaking_continue_handler)
@@ -214,5 +215,16 @@ The default PERIOD is 0.1 seconds.
         os.kill(pid, signal.SIGCONT)
         gdb.execute("continue", to_string=True)
 
+how_long=200
+if len(sys.argv) > 1:
+    try:
+        how_long=int(sys.argv[1])
+    except ValueError:
+        print("Invalid number \"%s\"." % sys.argv[1])
+        print("Usage: %s <sampling time length by sec, default=200s>" % sys.argv[0])
+        sys.exit(1)
+
+print("sampling time length: %d" % how_long)
+
 ProfileCommand()
-ProfileBeginCommand()
+ProfileBeginCommand(how_long)
