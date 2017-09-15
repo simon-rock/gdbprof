@@ -74,7 +74,8 @@ class Function:
         return function
 
     def print_samples(self, depth):
-        print "%s%s - %s" % (' ' * (self.indent * depth), self.get_samples(), self.name)
+        print ("%s%s - %s" % (' ' * (self.indent * depth), self.get_samples(), self.name)) # change for python3
+        #print "%s%s - %s" % (' ' * (self.indent * depth), self.get_samples(), self.name)
         for function in self.subfunctions:
             function.print_samples(depth+1)
 
@@ -85,14 +86,16 @@ class Function:
             subfunctions[function.name] = function.get_percent(total)
         
         i = 0
-        for name, value in sorted(subfunctions.iteritems(), key=lambda (k,v): (v,k), reverse=True):
+        for name, value in sorted(subfunctions.items(), reverse=True): #change for python3
+        #for name, value in sorted(subfunctions.iteritems(), key=lambda (k,v):(v,k), reverse=True):
             new_prefix = '' 
             if i + 1 == len(self.subfunctions):
                new_prefix += '  '
             else:
                new_prefix += '| '
 
-            print "%s%s%0.2f%% %s" % (prefix, "+ ", value, name)
+            print ("%s%s%0.2f%% %s" % (prefix, "+ ", value, name))
+            #print "%s%s%0.2f%% %s" % (prefix, "+ ", value, name)
 
             # Don't descend for very small values
             if value < 0.1:
@@ -165,7 +168,8 @@ class ProfileBeginCommand(gdb.Command):
         sleeps = 0
 
         threads = {}
-        for i in xrange(0,runtime):
+        for i in range(0,runtime): # change for python3
+        #for i in xrange(0,runtime):
           gdb.events.cont.connect(breaking_continue_handler)
           gdb.execute("continue", to_string=True)
           gdb.events.cont.disconnect(breaking_continue_handler)
@@ -189,11 +193,16 @@ class ProfileBeginCommand(gdb.Command):
           gdb.write(".")
           gdb.flush(gdb.STDOUT)
 
-        print "";
-        for thn, function in sorted(threads.iteritems()):
-          print ""
-          print "Thread: %s" % thn
-          print ""
+        print (""); #change for python3
+        #print "";
+        #for thn, function in sorted(threads.iteritems()):
+        for thn, function in sorted(threads.items()): #change for python3
+          print ("") # change for python3
+          print ("Thread11: %s" % thn) #change for python3
+          print ("") #change for python3
+          #print ""
+          #print "Thread: %s" % thn
+          #print ""
           function.print_percent("", function.get_samples())
 #        top.print_percent("", top.get_samples())
 
